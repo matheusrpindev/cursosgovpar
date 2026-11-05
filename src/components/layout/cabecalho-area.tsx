@@ -1,18 +1,24 @@
-import Link from "next/link";
 import { LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { obterPerfilAtual, temAcessoAtivo, type PerfilAtual } from "@/lib/auth/sessao";
+import { contarPendentes } from "@/lib/gestor/dados";
 import { obterMarca } from "@/lib/marca";
+import { LinkNavegacao } from "./link-navegacao";
 import { Logo } from "./logo";
 
 const NOMES_PAPEIS = { admin: "Administração", gestor: "Gestor(a)", aluno: "Aluno(a)" } as const;
 
-function linksDoPerfil(perfil: PerfilAtual) {
+type LinkMenu = { href: string; rotulo: string; exato?: boolean; contador?: number };
+
+async function linksDoPerfil(perfil: PerfilAtual): Promise<LinkMenu[]> {
   if (perfil.precisaAceitarTermos || !temAcessoAtivo(perfil)) return [];
   if (perfil.papel === "admin") return [{ href: "/admin", rotulo: "Administração" }];
-  if (perfil.papel === "gestor") {
+  if (perfil.papel === "gestor" && perfil.organizacao) {
+    const pendentes = await contarPendentes(perfil.organizacao.id);
     return [
-      { href: "/gestor", rotulo: "Meu órgão" },
+      { href: "/gestor", rotulo: "Cadastros", exato: true, contador: pendentes },
+      { href: "/gestor/alunos", rotulo: "Alunos" },
+      { href: "/gestor/historico", rotulo: "Histórico" },
       { href: "/cursos", rotulo: "Meus cursos" },
     ];
   }
@@ -22,7 +28,7 @@ function linksDoPerfil(perfil: PerfilAtual) {
 /** Cabeçalho da área logada. Lê a sessão, por isso fica dentro de um <Suspense>. */
 export async function CabecalhoArea() {
   const [marca, perfil] = await Promise.all([obterMarca(), obterPerfilAtual()]);
-  const links = perfil ? linksDoPerfil(perfil) : [];
+  const links = perfil ? await linksDoPerfil(perfil) : [];
 
   return (
     <header className="bg-background border-b">
@@ -51,13 +57,17 @@ export async function CabecalhoArea() {
       {links.length ? (
         <nav aria-label="Navegação principal" className="mx-auto flex max-w-5xl gap-1 overflow-x-auto px-2 pb-2">
           {links.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className="hover:bg-muted rounded-md px-3 py-2 text-sm font-medium whitespace-nowrap"
-            >
+            <LinkNavegacao key={link.href} href={link.href} exato={link.exato}>
               {link.rotulo}
-            </Link>
+              {link.contador ? (
+                <span
+                  className="bg-primary text-primary-foreground rounded-full px-1.5 text-xs leading-5 tabular-nums"
+                  aria-label={`${link.contador} pendentes`}
+                >
+                  {link.contador}
+                </span>
+              ) : null}
+            </LinkNavegacao>
           ))}
         </nav>
       ) : null}

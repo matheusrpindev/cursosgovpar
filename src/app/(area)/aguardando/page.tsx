@@ -1,8 +1,11 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+import { after } from "next/server";
 import { Ban, Clock, ShieldAlert, XCircle } from "lucide-react";
+import { FormularioNovaSolicitacao } from "@/components/auth/formulario-nova-solicitacao";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { destinoInicial, exigirPerfil, temAcessoAtivo, type PerfilAtual } from "@/lib/auth/sessao";
+import { avisarGestoresDoPedido } from "@/lib/notificacoes";
 
 export const metadata: Metadata = { title: "Situação do cadastro" };
 
@@ -27,7 +30,7 @@ function conteudo(perfil: PerfilAtual) {
       return {
         Icone: XCircle,
         titulo: "Cadastro não aprovado",
-        texto: `${orgao} não aprovou o seu cadastro.${perfil.motivoRecusa ? ` Motivo informado: “${perfil.motivoRecusa}”.` : ""} Se achar que houve engano, fale com o responsável no seu órgão.`,
+        texto: `${orgao} não aprovou o seu cadastro.${perfil.motivoRecusa ? ` Motivo informado: “${perfil.motivoRecusa}”.` : ""}`,
       };
     case "desativado":
       return {
@@ -51,7 +54,15 @@ export default async function Aguardando() {
   const perfil = await exigirPerfil();
   if (temAcessoAtivo(perfil)) redirect(destinoInicial(perfil));
 
+  // Logo depois de confirmar o e-mail a pessoa cai aqui: é quando os gestores são
+  // avisados. O aviso é idempotente e roda depois da resposta (não atrasa a página).
+  if (perfil.status === "pendente") {
+    after(() => avisarGestoresDoPedido(perfil.id));
+  }
+
   const { Icone, titulo, texto } = conteudo(perfil);
+  const podeReenviar = perfil.status === "recusado" && perfil.organizacao?.ativo !== false;
+
   return (
     <Card className="mx-auto max-w-xl">
       <CardHeader className="items-center text-center">
@@ -62,7 +73,17 @@ export default async function Aguardando() {
       </CardHeader>
       <CardContent className="grid gap-3 text-center text-sm leading-relaxed">
         <p>{texto}</p>
-        <p className="text-muted-foreground">Enquanto isso, você não tem acesso aos cursos.</p>
+        {podeReenviar ? (
+          <div className="mt-2 grid gap-3 border-t pt-5">
+            <p className="text-left font-medium">Houve algum engano?</p>
+            <p className="text-muted-foreground text-left">
+              Corrija o seu nome ou informe o órgão certo e reenvie a solicitação. Você pode reenviar até 3 vezes.
+            </p>
+            <FormularioNovaSolicitacao nomeAtual={perfil.nome} />
+          </div>
+        ) : (
+          <p className="text-muted-foreground">Enquanto isso, você não tem acesso aos cursos.</p>
+        )}
       </CardContent>
     </Card>
   );

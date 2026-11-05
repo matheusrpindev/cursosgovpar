@@ -78,3 +78,47 @@ export function caminhoInternoSeguro(valor: unknown): string | null {
   if (!valor.startsWith("/") || valor.startsWith("//") || valor.startsWith("/\\")) return null;
   return valor;
 }
+
+/**
+ * Aceita o link de cadastro de um órgão (https://.../cadastro/<slug>) ou só o
+ * slug, e devolve o slug. Vazio = sem mudança de órgão; null = inválido.
+ */
+export function slugDoLinkDeCadastro(valor: string): string | null | "" {
+  const texto = valor.trim();
+  if (!texto) return "";
+  const candidato = texto.includes("/cadastro/")
+    ? texto.split("/cadastro/")[1]?.split(/[/?#]/)[0] ?? ""
+    : texto;
+  const slug = candidato.toLowerCase();
+  return /^[a-z0-9]+(-[a-z0-9]+)*$/.test(slug) && slug.length <= 80 ? slug : null;
+}
+
+export const esquemaReenvio = z.object({
+  nome: z
+    .string({ error: "Informe o nome completo." })
+    .transform((v) => v.trim().replace(/\s+/g, " "))
+    .pipe(
+      z
+        .string()
+        .min(3, "Informe o nome completo.")
+        .max(160, "Nome muito longo.")
+        .refine((v) => v.includes(" "), "Informe nome e sobrenome."),
+    ),
+  linkOrgao: z
+    .string()
+    .default("")
+    .transform((v, ctx) => {
+      const slug = slugDoLinkDeCadastro(v);
+      if (slug === null) {
+        ctx.addIssue({ code: "custom", message: "Link de cadastro inválido. Copie o link completo enviado pelo órgão." });
+        return z.NEVER;
+      }
+      return slug;
+    }),
+});
+
+export const esquemaMotivoRecusa = z
+  .string()
+  .default("")
+  .transform((v) => v.trim())
+  .pipe(z.string().max(500, "O motivo pode ter no máximo 500 caracteres."));

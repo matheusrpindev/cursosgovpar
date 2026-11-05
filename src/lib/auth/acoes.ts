@@ -1,16 +1,20 @@
 "use server";
 
+import { refresh } from "next/cache";
 import { redirect } from "next/navigation";
+import { after } from "next/server";
 import { EmailConfirmacaoCadastro } from "@/lib/email/modelos/confirmacao-cadastro";
 import { EmailRecuperacaoSenha } from "@/lib/email/modelos/recuperacao-senha";
 import { enviarEmail } from "@/lib/email/enviar";
 import { obterMarca } from "@/lib/marca";
+import { avisarGestoresDoPedido } from "@/lib/notificacoes";
 import { criarClienteAdmin } from "@/lib/supabase/admin";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import {
   errosDeCampo,
   esquemaCadastro,
   esquemaNovaSenha,
+  esquemaReenvio,
   esquemaSoEmail,
   type EstadoFormulario,
 } from "@/lib/validacao";
@@ -208,4 +212,39 @@ export async function aceitarTermos(formData: FormData): Promise<void> {
     redirect("/entrar");
   }
   redirect("/painel");
+}
+
+const ERROS_REENVIO: Record<string, string> = {
+  AP001: "Você já reenviou a solicitação 3 vezes. Fale com o responsável no seu órgão.",
+  AP002: "Não encontramos este órgão ou ele está inativo. Confira o link com o responsável no órgão.",
+  AP003: "Informe nome e sobrenome.",
+  AP004: "Seu cadastro não está recusado, então não precisa ser reenviado.",
+};
+
+/** O aluno recusado corrige o nome (e, se for o caso, o órgão) e reenvia o pedido. */
+export async function reenviarSolicitacao(_anterior: EstadoFormulario, formData: FormData): Promise<EstadoFormulario> {
+  const valores = { nome: texto(formData, "nome"), linkOrgao: texto(formData, "linkOrgao") };
+  const resultado = esquemaReenvio.safeParse(valores);
+  if (!resultado.success) {
+    return { status: "erro", erros: errosDeCampo(resultado.error), valores };
+  }
+
+  const supabase = await criarClienteServidor();
+  const { data: claims } = await supabase.auth.getClaims();
+  const usuarioId = claims?.claims?.sub;
+  if (!usuarioId) redirect("/entrar");
+
+  const { error } = await supabase.rpc("reenviar_solicitacao", {
+    p_nome: resultado.data.nome,
+    p_slug: resultado.data.linkOrgao || undefined,
+  });
+  if (error) {
+    const mensagem = ERROS_REENVIO[error.code ?? ""];
+    if (!mensagem) console.error("[reenvio] falha", error.code, error.message);
+    return { status: "erro", mensagem: mensagem ?? "Não foi possível reenviar agora. Tente novamente.", valores };
+  }
+
+  after(() => avisarGestoresDoPedido(usuarioId));
+  refresh();
+  return { status: "sucesso", mensagem: "Solicitação reenviada." };
 }

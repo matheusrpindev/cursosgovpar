@@ -61,6 +61,9 @@ Abra http://localhost:3000. Usuários de exemplo:
 
 Link de cadastro de exemplo: http://localhost:3000/cadastro/vila-serena
 
+Para testar a aprovação, entre como `gestora.vila@aurora.exemplo`: a fila de
+cadastros, a lista de alunos e o histórico ficam em `/gestor`.
+
 Em desenvolvimento, os e-mails não são enviados: ficam gravados em `.emails/`
 (HTML e texto) e o caminho aparece no console.
 

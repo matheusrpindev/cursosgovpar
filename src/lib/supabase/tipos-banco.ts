@@ -209,14 +209,14 @@ isOneToOne: false
                   ]
                 },"perfis": {
                   Row: {
-                    "anonimizado_em": string | null,"aprovado_em": string | null,"aprovado_por": string | null,"atualizado_em": string,"cpf_mascarado": string | null,"criado_em": string,"email": string,"email_confirmado_em": string | null,"id": string,"motivo_recusa": string | null,"nome": string,"organizacao_id": string | null,"papel": Database["public"]['Enums']["papel"],"status": Database["public"]['Enums']["status_perfil"]
+                    "anonimizado_em": string | null,"aprovado_em": string | null,"aprovado_por": string | null,"atualizado_em": string,"cpf_mascarado": string | null,"criado_em": string,"email": string,"email_confirmado_em": string | null,"id": string,"motivo_recusa": string | null,"nome": string,"notificado_em": string | null,"organizacao_id": string | null,"papel": Database["public"]['Enums']["papel"],"status": Database["public"]['Enums']["status_perfil"]
                   }
                   ComputedFields: never
                   Insert: {
-                    "anonimizado_em"?: string | null,"aprovado_em"?: string | null,"aprovado_por"?: string | null,"atualizado_em"?: string,"cpf_mascarado"?: string | null,"criado_em"?: string,"email": string,"email_confirmado_em"?: string | null,"id": string,"motivo_recusa"?: string | null,"nome": string,"organizacao_id"?: string | null,"papel"?: Database["public"]['Enums']["papel"],"status"?: Database["public"]['Enums']["status_perfil"]
+                    "anonimizado_em"?: string | null,"aprovado_em"?: string | null,"aprovado_por"?: string | null,"atualizado_em"?: string,"cpf_mascarado"?: string | null,"criado_em"?: string,"email": string,"email_confirmado_em"?: string | null,"id": string,"motivo_recusa"?: string | null,"nome": string,"notificado_em"?: string | null,"organizacao_id"?: string | null,"papel"?: Database["public"]['Enums']["papel"],"status"?: Database["public"]['Enums']["status_perfil"]
                   }
                   Update: {
-                    "anonimizado_em"?: string | null,"aprovado_em"?: string | null,"aprovado_por"?: string | null,"atualizado_em"?: string,"cpf_mascarado"?: string | null,"criado_em"?: string,"email"?: string,"email_confirmado_em"?: string | null,"id"?: string,"motivo_recusa"?: string | null,"nome"?: string,"organizacao_id"?: string | null,"papel"?: Database["public"]['Enums']["papel"],"status"?: Database["public"]['Enums']["status_perfil"]
+                    "anonimizado_em"?: string | null,"aprovado_em"?: string | null,"aprovado_por"?: string | null,"atualizado_em"?: string,"cpf_mascarado"?: string | null,"criado_em"?: string,"email"?: string,"email_confirmado_em"?: string | null,"id"?: string,"motivo_recusa"?: string | null,"nome"?: string,"notificado_em"?: string | null,"organizacao_id"?: string | null,"papel"?: Database["public"]['Enums']["papel"],"status"?: Database["public"]['Enums']["status_perfil"]
                   }
                   Relationships: [
                     {
@@ -297,6 +297,9 @@ isOneToOne: false
 { Args: Record<PropertyKey, never>; Returns: {
               "id": string,"nome": string,"slug": string
             }[]
+                           },
+"reenviar_solicitacao":
+{ Args: { "p_nome": string,"p_slug"?: string }; Returns: undefined
                            }
           }
           Enums: {

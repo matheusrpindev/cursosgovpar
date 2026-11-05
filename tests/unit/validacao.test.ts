@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { caminhoInternoSeguro, esquemaCadastro, esquemaNovaSenha } from "@/lib/validacao";
+import {
+  caminhoInternoSeguro,
+  esquemaCadastro,
+  esquemaMotivoRecusa,
+  esquemaNovaSenha,
+  esquemaReenvio,
+  slugDoLinkDeCadastro,
+} from "@/lib/validacao";
 
 const valido = {
   slug: "vila-serena",
@@ -60,4 +67,40 @@ describe("caminhoInternoSeguro", () => {
       expect(caminhoInternoSeguro(valor)).toBeNull();
     },
   );
+});
+
+describe("slugDoLinkDeCadastro", () => {
+  it.each([
+    ["", ""],
+    ["   ", ""],
+    ["vila-serena", "vila-serena"],
+    ["https://cursos.govpar.com.br/cadastro/vila-serena", "vila-serena"],
+    ["https://cursos.govpar.com.br/cadastro/Vila-Serena?utm=x", "vila-serena"],
+    ["http://localhost:3000/cadastro/campo-alegre/", "campo-alegre"],
+  ])("%j -> %j", (entrada, esperado) => {
+    expect(slugDoLinkDeCadastro(entrada)).toBe(esperado);
+  });
+
+  it.each(["https://site.com/outra/coisa", "slug com espaço", "../admin", "a".repeat(81)])("recusa %j", (entrada) => {
+    expect(slugDoLinkDeCadastro(entrada)).toBeNull();
+  });
+});
+
+describe("esquemaReenvio", () => {
+  it("normaliza o nome e extrai o slug do link", () => {
+    const r = esquemaReenvio.parse({ nome: " Ana   Lima ", linkOrgao: "https://x.com/cadastro/campo-alegre" });
+    expect(r).toEqual({ nome: "Ana Lima", linkOrgao: "campo-alegre" });
+  });
+
+  it("aceita link vazio (mesmo órgão) e recusa link inválido", () => {
+    expect(esquemaReenvio.parse({ nome: "Ana Lima", linkOrgao: "" }).linkOrgao).toBe("");
+    expect(esquemaReenvio.safeParse({ nome: "Ana Lima", linkOrgao: "https://x.com/outro" }).success).toBe(false);
+  });
+});
+
+describe("esquemaMotivoRecusa", () => {
+  it("aceita vazio e limita a 500 caracteres", () => {
+    expect(esquemaMotivoRecusa.parse("  ")).toBe("");
+    expect(esquemaMotivoRecusa.safeParse("x".repeat(501)).success).toBe(false);
+  });
 });

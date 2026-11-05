@@ -18,6 +18,7 @@ Plataforma de cursos online com aprovação por órgão e certificados, revendá
 | Certificado | PDF gerado na emissão e guardado em bucket privado (novo download idêntico) + dados congelados no banco |
 | LGPD | Botão "anonimizar" no admin já na primeira versão |
 | Acompanhamento | Screenshots de desktop e celular ao fim de cada etapa |
+| Ambiente de teste | Publicado **depois da Etapa 3**, com a marca fictícia. Sem domínio por enquanto: as contas de teste da GovPar são criadas já confirmadas pelo admin (cadastro novo e recuperação de senha só funcionam quando houver domínio no Resend). Configuração feita pelo Claude com chaves salvas como segredos do ambiente (`SUPABASE_ACCESS_TOKEN`, `VERCEL_TOKEN`) |
 
 ### Premissas adotadas
 
@@ -51,8 +52,8 @@ Plataforma de cursos online com aprovação por órgão e certificados, revendá
 | Etapa | Entrega | Situação |
 |---|---|---|
 | 1. Fundação e autenticação | Projeto, banco com todas as tabelas e RLS, marca dinâmica, cadastro, confirmação de e-mail, login, recuperação de senha, "aguardando aprovação", aceite de termos, testes de permissão e CI | **Concluída** |
-| 2. Aprovação e painel do gestor | E-mail aos gestores, fila de pendentes, aprovar/recusar, desativar/reativar, lista de alunos, reenvio pelo recusado | Próxima |
-| 3. Cursos, aulas e progresso | CRUD de cursos/aulas, liberação por órgão, player com trava de fim de vídeo, progresso | |
+| 2. Aprovação e painel do gestor | E-mail aos gestores, fila de pendentes, aprovar/recusar, desativar/reativar, lista de alunos, histórico, reenvio pelo recusado | **Concluída** |
+| 3. Cursos, aulas e progresso | CRUD de cursos/aulas, liberação por órgão, player com trava de fim de vídeo, progresso, progresso dos alunos no painel do gestor | Próxima |
 | 4. Certificados | Emissão, PDF, QR code, validação pública, revogação | |
 | 5. Painel do admin | Órgãos, gestores (convite), visão geral, marca, anonimização, bateria completa de testes | |
 | 6. Acabamento e entrega | Responsividade, seed de demonstração, README, guia de nova instalação, deploy | |
@@ -101,6 +102,18 @@ Travas além da tabela (gatilhos no banco, valem mesmo para quem chama a API dir
 4. Dados impressos de certificado nunca mudam; só a revogação.
 5. A versão dos termos sobe sozinha quando o texto muda.
 6. Navegador não tem permissão de TRUNCATE/REFERENCES/TRIGGER; visitante só lê `configuracoes`.
+7. Reenvio pelo recusado só pela função `reenviar_solicitacao`: só o próprio, só se estiver recusado, no máximo 3 vezes, e só para órgão ativo.
+8. O registro de "gestores avisados" (`notificado_em`) só é alterado pelo servidor.
+
+### Avisos por e-mail (etapa 2)
+
+| Quando | Quem recebe |
+|---|---|
+| Aluno confirma o e-mail (ou reenvia a solicitação) | Gestores ativos do órgão; se o órgão não tiver gestor, os administradores. Uma vez por pedido |
+| Gestor aprova | O aluno |
+| Gestor recusa | O aluno, com o motivo (se informado) e o convite para corrigir e reenviar |
+
+Desativar e reativar não geram e-mail.
 
 ## Pendências registradas
 
