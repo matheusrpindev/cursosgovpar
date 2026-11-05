@@ -1,0 +1,58 @@
+name: Testes
+
+# Lint, tipos, testes de banco (pgTAP), testes de unidade e de permissão (RLS)
+# e build. Nenhum deploy deve acontecer se este fluxo falhar.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: testes-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  testes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Subir Supabase local
+        run: npx supabase start -x vector,logflare,supavisor,imgproxy,studio,realtime,edge-runtime,mailpit
+
+      - name: Gerar .env.local a partir do Supabase local
+        run: |
+          STATUS="$(npx supabase status -o json)"
+          {
+            echo "NEXT_PUBLIC_SUPABASE_URL=$(echo "$STATUS" | jq -r .API_URL)"
+            echo "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=$(echo "$STATUS" | jq -r .PUBLISHABLE_KEY)"
+            echo "SUPABASE_SECRET_KEY=$(echo "$STATUS" | jq -r .SECRET_KEY)"
+            echo "NEXT_PUBLIC_SITE_URL=http://localhost:3000"
+            echo "EMAIL_TRANSPORTE=arquivo"
+          } > .env.local
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Tipos
+        run: npm run typecheck
+
+      - name: Testes do banco (pgTAP)
+        run: npm run db:test
+
+      - name: Testes de unidade e de permissão
+        run: npm test
+
+      - name: Build
+        run: npm run build
