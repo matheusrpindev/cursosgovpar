@@ -20,6 +20,12 @@ const nextConfig: NextConfig = {
       },
     },
   },
+  // Só desenvolvimento: repassa o Supabase local pelo próprio site quando o
+  // navegador não alcança 127.0.0.1 (NEXT_PUBLIC_SUPABASE_VIA_SITE=1).
+  async rewrites() {
+    if (process.env.NEXT_PUBLIC_SUPABASE_VIA_SITE !== "1" || !process.env.NEXT_PUBLIC_SUPABASE_URL) return [];
+    return [{ source: "/supabase-local/:caminho*", destination: `${process.env.NEXT_PUBLIC_SUPABASE_URL}/:caminho*` }];
+  },
   async headers() {
     return [{ source: "/:path*", headers: cabecalhosDeSeguranca }];
   },
