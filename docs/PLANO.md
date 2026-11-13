@@ -126,6 +126,14 @@ Desativar e reativar não geram e-mail.
 - **Anonimização (LGPD)**: apaga nome, e-mail e CPF, bloqueia a conta e exclui os certificados da pessoa (eles carregam o nome). O progresso fica, sem ligação com alguém identificável.
 - **Modo demonstração** (`MODO_DEMONSTRACAO=1`): para ambientes de teste sem e-mail.
 
+## Ambiente de demonstração publicado
+
+- Site: https://aurora-cursos-demo.vercel.app (Vercel, projeto `aurora-cursos-demo`), com `MODO_DEMONSTRACAO=1`.
+- Banco: projeto Supabase `xjdqhohxclimqjpfbogr` da organização "GovPar", região **us-east-2** (era o único projeto disponível na conta gratuita). Só tem dados fictícios do `npm run seed:demo`.
+- As migrations foram aplicadas pela API de gerenciamento, sem registro no histórico de migrations do Supabase CLI. Antes de usar `supabase db push` neste projeto, registrar as três migrations como aplicadas (`supabase migration repair`).
+- A instalação real do cliente deve ser um projeto novo na região São Paulo, sem o modo demonstração e sem as contas de exemplo.
+- Publicar de novo: `vercel deploy --prod` (ainda sem ligação automática com o GitHub; fica para a etapa 6).
+
 ## Pendências registradas
 
 - Os vídeos do seed de demonstração são vídeos públicos de terceiros no YouTube, usados só como exemplo; trocar pelos vídeos do cliente.
