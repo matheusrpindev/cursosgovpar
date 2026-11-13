@@ -77,6 +77,12 @@ export function FormularioEntrar() {
       {erroDoLink ? (
         <Aviso tipo="erro">O link usado é inválido ou expirou. Entre com sua senha ou peça um novo link.</Aviso>
       ) : null}
+      {parametros.get("cadastro") === "demo" ? (
+        <Aviso tipo="sucesso">
+          Cadastro feito! Entre com o e-mail e a senha que você criou. O seu acesso aos cursos depende da aprovação do
+          gestor do órgão.
+        </Aviso>
+      ) : null}
       {mensagem ? <Aviso tipo="erro">{mensagem}</Aviso> : null}
 
       {emailNaoConfirmado ? (

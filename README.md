@@ -5,13 +5,14 @@ validação pública. É **white-label**: nome, logo, cores, textos, e-mails e
 modelo do certificado vêm do banco, configurados pelo painel do administrador.
 Cada cliente tem a sua própria instalação (deploy + banco).
 
-> Em construção. Plano, decisões e regras de acesso: [`docs/PLANO.md`](docs/PLANO.md).
-> O guia completo de deploy e de nova instalação chega na etapa 6.
+> Protótipo completo (cursos, certificados e painel do admin). Plano, decisões e
+> regras de acesso: [`docs/PLANO.md`](docs/PLANO.md). O guia de nova instalação
+> e o deploy automático chegam na etapa 6.
 
 ## Tecnologias
 
 Next.js 16 (App Router) · TypeScript · Supabase (Auth, Postgres com RLS, Storage) ·
-Tailwind CSS + shadcn/ui · Zod · Resend · Vitest + pgTAP.
+Tailwind CSS + shadcn/ui · Zod · Resend · @react-pdf/renderer + qrcode · Vitest + pgTAP.
 
 ## Rodar localmente
 
@@ -37,10 +38,11 @@ cp .env.example .env.local
 npx supabase status
 ```
 
-Crie os usuários de exemplo (senha de todos: `Senha1234`) e rode o app:
+Crie os dados de demonstração (usuários, cursos com vídeos públicos do YouTube,
+progresso e um certificado; senha de todos: `Senha1234`) e rode o app:
 
 ```bash
-npm run seed:usuarios
+npm run seed:demo
 ```
 
 ```bash
@@ -54,7 +56,8 @@ Abra http://localhost:3000. Usuários de exemplo:
 | admin@aurora.exemplo | Administrador |
 | gestora.vila@aurora.exemplo | Gestora da Prefeitura de Vila Serena |
 | gestor.campo@aurora.exemplo | Gestor da Prefeitura de Campo Alegre |
-| aluna.vila@aurora.exemplo | Aluna aprovada (Vila Serena) |
+| aluna.vila@aurora.exemplo | Aluna aprovada, com curso em andamento (Vila Serena) |
+| aluno.concluiu@aurora.exemplo | Aluno com curso concluído e certificado emitido |
 | aluno.pendente@aurora.exemplo | Aluno aguardando aprovação |
 | aluno.recusado@aurora.exemplo | Aluno recusado |
 | aluno.desativado@aurora.exemplo | Aluno desativado |
@@ -62,7 +65,15 @@ Abra http://localhost:3000. Usuários de exemplo:
 Link de cadastro de exemplo: http://localhost:3000/cadastro/vila-serena
 
 Para testar a aprovação, entre como `gestora.vila@aurora.exemplo`: a fila de
-cadastros, a lista de alunos e o histórico ficam em `/gestor`.
+cadastros, a lista de alunos, o progresso e o histórico ficam em `/gestor`.
+
+O curso "Demonstração rápida" tem vídeos de poucos segundos: serve para ver a
+aula ser concluída no fim do vídeo e emitir um certificado em um minuto. A
+validação pública fica em `/validar`.
+
+Com `MODO_DEMONSTRACAO=1` no `.env.local`, o cadastro dispensa a confirmação
+por e-mail e a tela de login lista as contas de exemplo (só para ambientes de
+teste).
 
 Em desenvolvimento, os e-mails não são enviados: ficam gravados em `.emails/`
 (HTML e texto) e o caminho aparece no console.
@@ -102,11 +113,12 @@ testes e o build a cada push e pull request.
 ```
 src/app/            páginas (públicas e área logada em (area)/)
 src/components/     componentes de interface (formulários, layout, shadcn/ui)
-src/lib/            regras do servidor: sessão, ações, e-mails, marca, validação
+src/lib/            regras do servidor: sessão, ações (aluno, gestor, admin),
+                    certificados (PDF), e-mails, marca, validação
 supabase/migrations esquema do banco com RLS
 supabase/tests      testes estruturais do banco (pgTAP)
 tests/              testes de unidade e de permissão (Vitest)
-scripts/            criar-admin e seed de usuários
+scripts/            criar-admin e seed de demonstração
 ```
 
 ## Segurança
@@ -115,5 +127,10 @@ scripts/            criar-admin e seed de usuários
   linguagem simples em [`docs/PLANO.md`](docs/PLANO.md).
 - A chave secreta do Supabase (`SUPABASE_SECRET_KEY`) só é usada no servidor,
   em arquivos marcados com `server-only`.
+- Certificados: a emissão é feita por uma função do banco, que confere se todas
+  as aulas foram concluídas; os dados impressos ficam congelados; o PDF fica
+  num bucket privado e o download passa por uma rota que consulta a RLS.
+- A validação pública devolve só nome, curso, carga horária, datas, órgão e
+  situação (sem CPF nem e-mail).
 - O cadastro público do Supabase fica desligado: contas são criadas pelo
   servidor, e papel/status são decididos pelo banco.

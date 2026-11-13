@@ -11,18 +11,36 @@ const NOMES_PAPEIS = { admin: "Administração", gestor: "Gestor(a)", aluno: "Al
 type LinkMenu = { href: string; rotulo: string; exato?: boolean; contador?: number };
 
 async function linksDoPerfil(perfil: PerfilAtual): Promise<LinkMenu[]> {
-  if (perfil.precisaAceitarTermos || !temAcessoAtivo(perfil)) return [];
-  if (perfil.papel === "admin") return [{ href: "/admin", rotulo: "Administração" }];
+  if (perfil.precisaAceitarTermos) return [];
+  if (!temAcessoAtivo(perfil)) {
+    // Quem foi desativado ainda pode baixar os certificados que já emitiu.
+    return perfil.status === "desativado" ? [{ href: "/certificados", rotulo: "Meus certificados" }] : [];
+  }
+  if (perfil.papel === "admin") {
+    return [
+      { href: "/admin", rotulo: "Visão geral", exato: true },
+      { href: "/admin/cursos", rotulo: "Cursos" },
+      { href: "/admin/orgaos", rotulo: "Órgãos" },
+      { href: "/admin/pessoas", rotulo: "Pessoas" },
+      { href: "/admin/certificados", rotulo: "Certificados" },
+      { href: "/admin/marca", rotulo: "Marca e textos" },
+    ];
+  }
   if (perfil.papel === "gestor" && perfil.organizacao) {
     const pendentes = await contarPendentes(perfil.organizacao.id);
     return [
       { href: "/gestor", rotulo: "Cadastros", exato: true, contador: pendentes },
       { href: "/gestor/alunos", rotulo: "Alunos" },
+      { href: "/gestor/progresso", rotulo: "Progresso" },
       { href: "/gestor/historico", rotulo: "Histórico" },
       { href: "/cursos", rotulo: "Meus cursos" },
+      { href: "/certificados", rotulo: "Meus certificados" },
     ];
   }
-  return [{ href: "/cursos", rotulo: "Meus cursos" }];
+  return [
+    { href: "/cursos", rotulo: "Meus cursos" },
+    { href: "/certificados", rotulo: "Meus certificados" },
+  ];
 }
 
 /** Cabeçalho da área logada. Lê a sessão, por isso fica dentro de um <Suspense>. */

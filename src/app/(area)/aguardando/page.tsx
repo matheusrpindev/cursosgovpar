@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { after } from "next/server";
 import { Ban, Clock, ShieldAlert, XCircle } from "lucide-react";
@@ -81,6 +82,12 @@ export default async function Aguardando() {
             </p>
             <FormularioNovaSolicitacao nomeAtual={perfil.nome} />
           </div>
+        ) : perfil.status === "desativado" ? (
+          <p>
+            <Link href="/certificados" className="text-primary underline underline-offset-4">
+              Ver e baixar os meus certificados
+            </Link>
+          </p>
         ) : (
           <p className="text-muted-foreground">Enquanto isso, você não tem acesso aos cursos.</p>
         )}

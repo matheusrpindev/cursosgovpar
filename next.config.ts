@@ -12,6 +12,10 @@ const nextConfig: NextConfig = {
   cacheComponents: true,
   partialPrefetching: true,
   poweredByHeader: false,
+  // O PDF do certificado é gerado no servidor com esta biblioteca.
+  serverExternalPackages: ["@react-pdf/renderer"],
+  // Envio de imagens (logo, capa, assinatura) pelas ações do servidor.
+  experimental: { serverActions: { bodySizeLimit: "6mb" } },
   turbopack: {
     rules: {
       "*.css": {

@@ -7,6 +7,9 @@ export function Rodape({ marca }: { marca: Marca }) {
       <div className="mx-auto flex max-w-5xl flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p>{marca.textoRodape || marca.nomeEmpresa || marca.nomePlataforma}</p>
         <nav aria-label="Links institucionais" className="flex flex-wrap gap-x-4 gap-y-2">
+          <Link href="/validar" className="hover:text-foreground underline-offset-4 hover:underline">
+            Validar certificado
+          </Link>
           <Link href="/termos" className="hover:text-foreground underline-offset-4 hover:underline">
             Termos de uso
           </Link>

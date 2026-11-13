@@ -288,6 +288,29 @@ isOneToOne: false
             "aceitar_termos_atuais":
 { Args: Record<PropertyKey, never>; Returns: undefined
                            },
+"emitir_certificado":
+{ Args: { "p_curso": string }; Returns: {
+              "codigo": string,
+"curso_id": string,
+"dados": NonNullable<Json>,
+"emitido_em": string,
+"id": string,
+"motivo_revogacao": string | null,
+"organizacao_id": string | null,
+"pdf_path": string | null,
+"perfil_id": string | null,
+"revogado_em": string | null,
+"revogado_por": string | null
+            }
+                          SetofOptions: {
+        from: "*"
+        to: "certificados"
+        isOneToOne: true
+        isSetofReturn: false
+      } },
+"mover_aula":
+{ Args: { "p_aula": string,"p_sobe": boolean }; Returns: undefined
+                           },
 "orgao_para_cadastro":
 { Args: { "p_slug": string }; Returns: {
               "id": string,"nome": string
@@ -300,6 +323,11 @@ isOneToOne: false
                            },
 "reenviar_solicitacao":
 { Args: { "p_nome": string,"p_slug"?: string }; Returns: undefined
+                           },
+"validar_certificado":
+{ Args: { "p_codigo": string }; Returns: {
+              "carga_horaria": string,"codigo": string,"curso": string,"data_conclusao": string,"emitido_em": string,"nome": string,"orgao": string,"valido": boolean
+            }[]
                            }
           }
           Enums: {

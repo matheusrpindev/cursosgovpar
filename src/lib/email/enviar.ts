@@ -4,6 +4,7 @@ import path from "node:path";
 import type { ReactElement } from "react";
 import { render } from "@react-email/components";
 import { Resend } from "resend";
+import { modoDemonstracao } from "@/lib/demo";
 import { envServidor } from "@/lib/env-servidor";
 import { obterMarca } from "@/lib/marca";
 
@@ -27,6 +28,11 @@ function remetente(nomePlataforma: string, endereco: string): string {
  * - Desenvolvimento: grava o HTML em .emails/ e mostra no console.
  */
 export async function enviarEmail({ para, assunto, conteudo }: Mensagem): Promise<void> {
+  if (modoDemonstracao()) {
+    // Ambiente de demonstração: nenhum e-mail sai.
+    console.info(`[e-mail] (demonstração, não enviado) "${assunto}" para ${[para].flat().join(", ")}`);
+    return;
+  }
   const env = envServidor();
   const transporte = env.EMAIL_TRANSPORTE ?? (env.RESEND_API_KEY ? "resend" : "arquivo");
   const [html, texto] = await Promise.all([

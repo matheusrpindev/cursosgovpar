@@ -53,8 +53,8 @@ select is_empty(
 select is_empty(
   $$ select p.proname from pg_proc p join pg_namespace n on n.oid = p.pronamespace
      where n.nspname = 'public' and has_function_privilege('anon', p.oid, 'EXECUTE')
-       and p.proname not in ('orgao_para_cadastro', 'orgaos_para_cadastro') $$,
-  'Visitante só executa as funções públicas de cadastro'
+       and p.proname not in ('orgao_para_cadastro', 'orgaos_para_cadastro', 'validar_certificado') $$,
+  'Visitante só executa as funções públicas de cadastro e de validação de certificado'
 );
 
 select is_empty(

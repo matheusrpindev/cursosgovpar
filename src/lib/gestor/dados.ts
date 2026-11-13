@@ -157,3 +157,64 @@ export async function listarHistorico(organizacaoId: string): Promise<EventoHist
     };
   });
 }
+
+export type ProgressoDoAluno = {
+  id: string;
+  nome: string;
+  papel: "aluno" | "gestor";
+  cursos: { cursoId: string; concluidas: number; total: number; certificado: boolean }[];
+};
+
+/**
+ * Progresso das pessoas do órgão em cada curso liberado. Tudo pela sessão do
+ * gestor: a RLS só devolve pessoas, progresso e certificados do próprio órgão.
+ */
+export async function listarProgressoDoOrgao(organizacaoId: string): Promise<{
+  cursos: { id: string; titulo: string; total: number }[];
+  pessoas: ProgressoDoAluno[];
+}> {
+  const supabase = await criarClienteServidor();
+  const [{ data: cursos, error }, { data: pessoas }, { data: certificados }] = await Promise.all([
+    supabase.from("cursos").select("id, titulo, aulas ( id )").eq("status", "publicado").order("titulo"),
+    supabase
+      .from("perfis")
+      .select("id, nome, papel")
+      .eq("organizacao_id", organizacaoId)
+      .eq("status", "aprovado")
+      .in("papel", ["aluno", "gestor"])
+      .order("nome")
+      .limit(1000),
+    supabase.from("certificados").select("perfil_id, curso_id").eq("organizacao_id", organizacaoId).is("revogado_em", null),
+  ]);
+  if (error) throw new Error(`Falha ao listar progresso: ${error.message}`);
+
+  const ids = (pessoas ?? []).map((p) => p.id);
+  const { data: progresso } = ids.length
+    ? await supabase.from("progresso_aulas").select("perfil_id, aula_id").in("perfil_id", ids).limit(50000)
+    : { data: [] };
+
+  const cursoDaAula = new Map<string, string>();
+  for (const curso of cursos ?? []) for (const aula of curso.aulas) cursoDaAula.set(aula.id, curso.id);
+
+  const feitas = new Map<string, number>();
+  for (const p of progresso ?? []) {
+    const cursoId = cursoDaAula.get(p.aula_id);
+    if (cursoId) feitas.set(`${p.perfil_id}:${cursoId}`, (feitas.get(`${p.perfil_id}:${cursoId}`) ?? 0) + 1);
+  }
+  const comCertificado = new Set((certificados ?? []).map((c) => `${c.perfil_id}:${c.curso_id}`));
+
+  return {
+    cursos: (cursos ?? []).map((c) => ({ id: c.id, titulo: c.titulo, total: c.aulas.length })),
+    pessoas: (pessoas ?? []).map((p) => ({
+      id: p.id,
+      nome: p.nome,
+      papel: p.papel as "aluno" | "gestor",
+      cursos: (cursos ?? []).map((c) => ({
+        cursoId: c.id,
+        concluidas: feitas.get(`${p.id}:${c.id}`) ?? 0,
+        total: c.aulas.length,
+        certificado: comCertificado.has(`${p.id}:${c.id}`),
+      })),
+    })),
+  };
+}

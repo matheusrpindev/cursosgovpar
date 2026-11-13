@@ -53,10 +53,12 @@ Plataforma de cursos online com aprovação por órgão e certificados, revendá
 |---|---|---|
 | 1. Fundação e autenticação | Projeto, banco com todas as tabelas e RLS, marca dinâmica, cadastro, confirmação de e-mail, login, recuperação de senha, "aguardando aprovação", aceite de termos, testes de permissão e CI | **Concluída** |
 | 2. Aprovação e painel do gestor | E-mail aos gestores, fila de pendentes, aprovar/recusar, desativar/reativar, lista de alunos, histórico, reenvio pelo recusado | **Concluída** |
-| 3. Cursos, aulas e progresso | CRUD de cursos/aulas, liberação por órgão, player com trava de fim de vídeo, progresso, progresso dos alunos no painel do gestor | Próxima |
-| 4. Certificados | Emissão, PDF, QR code, validação pública, revogação | |
-| 5. Painel do admin | Órgãos, gestores (convite), visão geral, marca, anonimização, bateria completa de testes | |
-| 6. Acabamento e entrega | Responsividade, seed de demonstração, README, guia de nova instalação, deploy | |
+| 3. Cursos, aulas e progresso | CRUD de cursos/aulas, liberação por órgão, player com trava de fim de vídeo, progresso, progresso dos alunos no painel do gestor | **Concluída** |
+| 4. Certificados | Emissão, PDF, QR code, validação pública, revogação | **Concluída** |
+| 5. Painel do admin | Órgãos, gestores, visão geral, marca, anonimização, testes de permissão | **Concluída** |
+| 6. Acabamento e entrega | Guia de nova instalação, deploy automático, captcha, envio de e-mail do convite de gestor, decisões de contas e pagamento | Próxima |
+
+As etapas 3 a 5 foram entregues juntas, a pedido, para montar o protótipo de demonstração.
 
 ## Modelo de dados
 
@@ -91,7 +93,7 @@ desativado vê só o próprio perfil e os próprios certificados.
 | cursos e aulas | — | publicados e liberados para o órgão | idem (o gestor também estuda) | tudo |
 | organizacao_cursos | — | do próprio órgão | do próprio órgão | tudo |
 | progresso_aulas | — | lê e marca o próprio, só em aulas visíveis | lê o do órgão | lê tudo |
-| certificados | valida por código (etapa 4) | os próprios | os do órgão | tudo, inclusive revogar |
+| certificados | valida por código (só campos públicos) | os próprios | os do órgão | tudo, inclusive revogar |
 | auditoria | — | — | a do próprio órgão | tudo |
 
 Travas além da tabela (gatilhos no banco, valem mesmo para quem chama a API direto):
@@ -115,7 +117,18 @@ Travas além da tabela (gatilhos no banco, valem mesmo para quem chama a API dir
 
 Desativar e reativar não geram e-mail.
 
+### Como funcionam as partes novas
+
+- **Conclusão da aula**: o player (YouTube ou Vimeo) avisa quando o vídeo termina e a aula é marcada sozinha. Com a trava ligada, só conta se a pessoa assistiu a pelo menos 85% do vídeo de fato (pular para o fim não conclui). A posição fica guardada no navegador. Limite conhecido: a conferência do tempo assistido é feita no navegador; alguém com conhecimento técnico consegue burlar. O banco garante o resto (pessoa aprovada, curso liberado).
+- **Certificado**: a função `emitir_certificado` (no banco) confere a conclusão, gera o código (`PREFIXO-XXXXX-XXXXX`) e congela os dados impressos. O PDF é gerado uma vez e guardado; baixar de novo devolve o mesmo arquivo.
+- **Validação pública** (`/validar/<código>` e QR code): mostra nome, curso, carga horária, datas, órgão e se está válido ou revogado.
+- **Gestor novo**: o admin cria a conta e recebe na tela um link para o gestor definir a senha (o envio automático por e-mail entra na etapa 6). O admin também pode gerar um link de nova senha para qualquer pessoa.
+- **Anonimização (LGPD)**: apaga nome, e-mail e CPF, bloqueia a conta e exclui os certificados da pessoa (eles carregam o nome). O progresso fica, sem ligação com alguém identificável.
+- **Modo demonstração** (`MODO_DEMONSTRACAO=1`): para ambientes de teste sem e-mail.
+
 ## Pendências registradas
+
+- Os vídeos do seed de demonstração são vídeos públicos de terceiros no YouTube, usados só como exemplo; trocar pelos vídeos do cliente.
 
 - Proteção contra cadastros em massa (captcha) e limite de pedidos de recuperação por e-mail: avaliar na etapa 6.
 - Configuração de autenticação de cada instalação remota (URL do site, cadastro desligado, senha mínima): via API de gerenciamento do Supabase no script de nova instalação (etapa 6). Não usar `supabase config push`, que levaria os limites de desenvolvimento para produção.

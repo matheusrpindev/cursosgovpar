@@ -6,6 +6,7 @@ import { after } from "next/server";
 import { EmailConfirmacaoCadastro } from "@/lib/email/modelos/confirmacao-cadastro";
 import { EmailRecuperacaoSenha } from "@/lib/email/modelos/recuperacao-senha";
 import { enviarEmail } from "@/lib/email/enviar";
+import { modoDemonstracao } from "@/lib/demo";
 import { obterMarca } from "@/lib/marca";
 import { avisarGestoresDoPedido } from "@/lib/notificacoes";
 import { criarClienteAdmin } from "@/lib/supabase/admin";
@@ -86,7 +87,8 @@ export async function cadastrar(_anterior: EstadoFormulario, formData: FormData)
   const { error } = await admin.auth.admin.createUser({
     email: dados.email,
     password: dados.senha,
-    email_confirm: false,
+    // Na demonstração não há envio de e-mail: a conta já nasce confirmada.
+    email_confirm: modoDemonstracao(),
     user_metadata: { nome: dados.nome, cpf: dados.cpf, aceite_termos: true },
     app_metadata: { papel: "aluno", organizacao_id: orgao.id },
   });
@@ -100,6 +102,8 @@ export async function cadastrar(_anterior: EstadoFormulario, formData: FormData)
     console.error("[cadastro] falha ao criar usuário", error.code, error.message);
     return { status: "erro", mensagem: "Não foi possível concluir o cadastro. Tente novamente em instantes.", valores };
   }
+
+  if (modoDemonstracao()) redirect("/entrar?cadastro=demo");
 
   try {
     await enviarConfirmacao(dados.email, dados.nome, orgao.nome);
